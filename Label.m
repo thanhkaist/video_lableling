@@ -102,16 +102,21 @@ data = get(hObject,'UserData');
 video_file_name =0;
 video_file_path =0;
 if isempty(data)
-    [ video_file_name,video_file_path ] = uigetfile({'*.avi;*.mp4'},'Pick a video file'); 
+    [ video_file_name,video_file_path ] = uigetfile({'*.avi;*.mp4'},'Pick a video file');
 else
-   video_file_name = data.fname;
-   video_file_path = strcat(data.fpath,'\');
-   set(hObject,'UserData','')
+    video_file_name = data.fname;
+    video_file_path = strcat(data.fpath,'\');
+    set(hObject,'UserData','')
 end
 
 if(video_file_path == 0)
     return;
 end
+
+
+
+
+
 input_video_file = [video_file_path,video_file_name];
 set(handles.edit1,'String',input_video_file);
 [pathstr,name,ext] = fileparts(input_video_file); %get file name to view the title windows
@@ -135,13 +140,28 @@ handles.videoObject=videoObject; handles.current_frame=1; handles.h=h;
 handles.newframe=1; handles.oldframe=1; handles.N=videoObject.NumberOfFrames;
 handles.filepath = name;
 global act_y act_x label fr;
-act_y = []; act_x = []; label = []; fr =[];
-stem(handles.axes2,[]); set(handles.axes2,'xtick',[],'ytick',[])
+
+% Load result file
+resultFile = strcat(name,'.mat'); %'Class3_000001.mat'
+if (exist(resultFile,'file'))
+    %label = load(resultFile,'label');
+    %fr = load(resultFile,'fr');
+    load(resultFile);
+    act_y = (label > 0)'; act_x = (fr/handles.N)';
+    table = [label fr/30]; set(handles.uitable1,'Data',table); %show to table
+    stem(handles.axes2,[0 act_x 1],[0 act_y 0]);
+    set(handles.axes2,'xtick',[],'ytick',[]);
+else
+    act_y = []; act_x = []; label = []; fr =[];
+    stem(handles.axes2,[]); set(handles.axes2,'xtick',[],'ytick',[]);
+    set(handles.uitable1,'Data',[]);
+end
+
+
 set(handles.playpause,'Enable','on');
 set(handles.slider1,'Enable','on');
 set(handles.slider1,'Visible','on');
 set(handles.axes2,'Visible','on');
-set(handles.uitable1,'Data',[]);
 set(handles.uitable1,'Enable','on');
 
 guidata(hObject,handles);
@@ -567,13 +587,12 @@ if strcmp(eventdata.Key, 'p')
     en =get(hO,'Enable');
     if (strcmp(en,'on'))
         [filepath,name,ext] = fileparts(get(hd.edit1,'String'));
-        names = dir( strcat(filepath,'/*.avi'))
+        names = dir( strcat(filepath,'/*.avi'));
         ind = 1 ;
         
-        fileName = strcat(name,ext)
+        fileName = strcat(name,ext);
         for i = 1:length(names)
             if strcmp(fileName,names(i).name)
-                disp(i)
                 ind = i;
             end
         end
@@ -586,7 +605,7 @@ if strcmp(eventdata.Key, 'p')
         data.hack = 'hack';
         data.fname = names(ind).name;
         data.fpath = filepath;
-        set(hO,'UserData',data);    
+        set(hO,'UserData',data);
         browse_Callback(hO, ed, hd);
     else
         disp('browse button disabled');
@@ -595,5 +614,5 @@ if strcmp(eventdata.Key, 'p')
 end
 
 
-disp('Key is not supported')
+disp('Key is not supported');
 
